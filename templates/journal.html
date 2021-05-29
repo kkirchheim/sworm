@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Journal{% endblock %}
+
+{% block content %}
+    <div class="container">
+      <h1>{{ journal.name }}</h1>
+        Articles: {{ n_articles }}
+
+         {% for article in articles %}
+            <div class="article-card card">
+                <div class="card-header">
+                    <b><a href="{% url 'article' article.id %}">{{ article.title }}</a></b>
+                </div>
+                <div class="card-body">
+                    <p><b>Abstract: </b>{{ article.abstract }}</p>
+                    <p><b>Topics: </b>{{ article.lda_topics }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}

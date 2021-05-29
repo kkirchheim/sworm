@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Article{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <h1>{{ article.title }}</h1>
+
+        <div class="card">
+            <div class="card-header">Abstract</div>
+            <div class="card-body">{{ article.abstract }}</div>
+        </div>
+
+
+        <table class="table">
+            <tbody>
+            <tr>
+                <td>Journal</td>
+                <td><a href="{% url 'journal' article.journal.issn %}">{{ article.journal.name }}</a></td>
+            </tr>
+            <tr>
+                <td>Published</td>
+                <td>{{ article.publish_on }}</td>
+            </tr>
+            <tr>
+                <td>Authors</td>
+                <td>{{ article.authors }}</td>
+            </tr>
+            <tr>
+                <td>Citations</td>
+                <td>{{ article.citations }}</td>
+            </tr>
+            <tr>
+                <td>Country</td>
+                <td>{{ article.country }}</td>
+            </tr>
+            <tr>
+                <td>DOI</td>
+                <td><a href="https://doi.org/{{ article.doi }}">{{ article.doi }}</a></td>
+            </tr>
+             <tr>
+                <td>Topics</td>
+                <td>{{ article.lda_topics }}</td>
+            </tr>
+            </tbody>
+        </table>
+
+        {% if similar_articles %}
+            <h2>Similar Articles:</h2>
+            {% for sim in similar_articles %}
+                <div class="article-card card">
+                    <div class="card-header"><b><a href="{% url 'article' sim.id %}">{{ sim.title }}</a></b></div>
+                    <div class="card-body">
+                        <p><b>Abstract: </b>{{ sim.abstract }}</p>
+                        <p><b>Topics: </b>{{ sim.lda_topics }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+    </div>
+{% endblock %}

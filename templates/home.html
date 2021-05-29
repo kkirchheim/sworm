@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+    {# <iframe width="50%" height="100%" src="https://www.youtube.com/embed/tgbNymZ7vqY"></iframe> #}
+    <div class="container">
+        <h1>Social Work Research Map</h1>
+
+        Ea vitae ipsum reprehenderit. Nemo recusandae similique qui laboriosam asperiores. Aut ut consequatur sint ullam sit. Voluptatum repellat nisi aperiam labore ut libero qui. Vitae quaerat reprehenderit ea labore.
+        Non magnam doloremque aut soluta. Optio ipsam temporibus iure voluptatem ea earum. Quisquam quo porro veritatis aut aut praesentium aperiam.
+        Laudantium voluptates veritatis modi qui ab temporibus voluptate. Dolores fugit quia ea qui quos facere. Consequatur qui quia ipsa repudiandae corporis voluptatum id laudantium. Sed temporibus laudantium harum enim vero quod. Ut delectus nisi vitae culpa sit.
+        Qui in et ut sint dolor sit. Quam ut alias earum eum provident dicta et voluptatum. Saepe nisi velit hic sunt natus similique exercitationem nam. Quo quae laboriosam dolorum nihil incidunt non qui. Voluptatem recusandae aut omnis consequatur et illo molestiae.
+        Soluta vel est odit nobis harum numquam. Commodi saepe quo molestiae a assumenda omnis aut. Quidem nemo temporibus et aut provident rerum aperiam temporibus.
+
+        <div class="intro-video">
+            <video width="100%" controls>
+                {% load static %}
+                <source src="{% static 'video/mov_bbb.mp4' %}" type="video/mp4">
+                <source src="{% static 'video/mov_bbb.ogg' %}" type="video/ogg">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    </div>
+
+
+{% endblock %}

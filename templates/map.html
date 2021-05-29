@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block preamble %}
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.3.2.min.js"  crossorigin="anonymous"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.3.2.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.3.2.min.js" crossorigin="anonymous"></script>
+{% endblock %}
+
+{% block title %}Map{% endblock %}
+
+{% block content %}
+<div class="loader spinner-border text-primary"></div>
+
+<div class="body">
+    <div class="container-fluid" role="main">
+       {{ div | safe }}
+    </div>
+</div>
+
+    {{ script | safe }}
+{% endblock %}
