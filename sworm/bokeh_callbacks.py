@@ -96,7 +96,7 @@ def selected_code():
             cb_data.source.selected.indices.forEach(index => topics.push(source.data['topics'][index]));
             cb_data.source.selected.indices.forEach(index => ids.push(source.data['index'][index]));
             
-            titles = "<b>" + titles[0].toString().replace(/<br>/g, ' ') + "</b><br>";
+            titles = "<b><a href='/article/" + ids[0].toString() + "'>" + titles[0].toString().replace(/<br>/g, ' ') + "</a></b><br>";
             authors = "<b>Authors:</b> " + authors[0].toString() + "<br>";
             var save_option = '<a class="btn btn-primary" href="/add/' + ids[0] + '">Add to Library</a><br>';
             dates = "<b>Published:</b> " + dates[0].toString() + "<br>";

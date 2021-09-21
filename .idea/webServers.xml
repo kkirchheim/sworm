@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="262a6678-eb00-4b26-9c23-27f3bcb076a0" name="sworm.org">
+        <fileTransfer rootFolder="/root/sworm/" accessType="SFTP" host="sworm.org" port="22" sshConfigId="ea7dcf7a-90e0-4686-8873-df5d0bc3f286" sshConfig="root@sworm.org:22 agent" authAgent="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

@@ -6,43 +6,52 @@
 
     <div class="container">
 
-    <h1>Saved Articles</h1>
-
-    {% for article in articles %}
-        <div class="article-card card">
-            <div class="card-header">
-                <b><a href="{% url 'article' article.id %}">{{ article.title }}</a></b>
-                <a class="btn btn-danger float-right" href="{% url 'remove_from_library' article.id %}">Remove</a>
-            </div>
-            <div class="card-body">
-                <p><b>Abstract: </b>{{ article.abstract }}</p>
-                <p><b>Topics: </b>{{ article.lda_topics }}</p>
-                <p><b>Journal: </b><a href="{% url 'journal' article.journal.issn  %}">{{ article.journal.name }}</a></p>
-            </div>
-        </div>
-    {% endfor %}
-
-    <h1>Recommended Articles</h1>
-    <a class="btn btn-primary" href="{% url 'refit' %}">Update</a>
-
-    {% if recommended %}
-        {% for article in recommended %}
-            <div class="article-card card">
-                <div class="card-header">
-                    <b><a href="{% url 'article' article.id %}">{{ article.title }}</a></b>
-                    <a class="btn btn-success float-right" href="{% url 'add_to_library' article.id %}">Add</a>
+        <h1>Saved Articles</h1>
+        {% if articles %}
+            {% for article in articles %}
+                <div class="article-card card">
+                    <div class="card-header">
+                        <b><a href="{% url 'article' article.id %}">{{ article.title }}</a></b>
+                        <a class="btn btn-danger float-right"
+                           href="{% url 'remove_from_library' article.id %}">Remove</a>
+                    </div>
+                    <div class="card-body">
+                        <p><b>Abstract: </b>{{ article.abstract }}</p>
+                        <p><b>Topics: </b>{{ article.lda_topics }}</p>
+                        <p><b>Journal: </b><a
+                                href="{% url 'journal' article.journal.issn %}">{{ article.journal.name }}</a></p>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <p><b>Abstract: </b>{{ article.abstract }}</p>
-                    <p><b>Topics: </b>{{ article.lda_topics }}</p>
-                    <p><b>Journal: </b><a href="{% url 'journal' article.journal.issn  %}">{{ article.journal.name }}</a></p>
-                </div>
-            </div>
-        {% endfor %}
+            {% endfor %}
 
-    {% else %}
-        <p>No articles recommended yet. You have to add articles to your library and update the recommender. </p>
-    {% endif %}
+            <h1>Recommended Articles</h1>
+            <a class="btn btn-primary" href="{% url 'refit' %}">Update</a>
+
+            {% if recommended %}
+                {% for article in recommended %}
+                    <div class="article-card card">
+                        <div class="card-header">
+                            <b><a href="{% url 'article' article.id %}">{{ article.title }}</a></b>
+                            <a class="btn btn-success float-right" href="{% url 'add_to_library' article.id %}">Add</a>
+                        </div>
+                        <div class="card-body">
+                            <p><b>Abstract: </b>{{ article.abstract }}</p>
+                            <p><b>Topics: </b>{{ article.lda_topics }}</p>
+                            <p><b>Journal: </b><a
+                                    href="{% url 'journal' article.journal.issn %}">{{ article.journal.name }}</a></p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>
+                    No articles recommended yet. You have to add articles to your library and update the recommender.
+                </p>
+            {% endif %}
+
+        {% else %}
+            You can add articles to your library from the map.
+        {% endif %}
+
 
     </div>
 

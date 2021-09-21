@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
 from .forms import CustomUserCreationForm
-from .models import Article, Journal, CustomUser
+from .models import Article, Journal, CustomUser, Author, Country
 from django.contrib.auth.decorators import login_required
 from bokeh.plotting import figure
 from datetime import date
@@ -28,6 +28,8 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 data_dir = join(abspath(join(dirname(__file__), "..")), "data")
+django_theta_file = join(data_dir, "django-theta.pkl")
+django_tfidf_file = join(data_dir, "django-articles-tfidf.pkl")
 
 
 class SignUpView(CreateView):
@@ -36,14 +38,22 @@ class SignUpView(CreateView):
     template_name = 'registration/signup.html'
 
 
-def create_kdtree():
-    path = join(data_dir, "django-theta.pkl")
-    df_theta = pd.read_pickle(path)
-    X = np.array(df_theta.values)
-
+def helper_load_thetas():
+    df_theta = pd.read_pickle(django_theta_file)
     df_theta.reset_index(inplace=True)
     df_theta["index"] = df_theta["index"].apply(lambda x: int(x.replace("SCOPUS_ID:", "")))
     df_theta.set_index("index", inplace=True)
+    return df_theta
+
+
+def create_kdtree():
+    # path = join(data_dir, "django-theta.pkl")
+    df_theta = helper_load_thetas()
+    X = np.array(df_theta.values)
+    #
+    # df_theta.reset_index(inplace=True)
+    # df_theta["index"] = df_theta["index"].apply(lambda x: int(x.replace("SCOPUS_ID:", "")))
+    # df_theta.set_index("index", inplace=True)
 
     log.info(df_theta.index)
     tree = neighbors.KDTree(X)
@@ -53,30 +63,42 @@ def create_kdtree():
 tree = create_kdtree()
 
 
-def articles_view(request, id):
+def view_author(request, id: int):
+    author = Author.objects.get(id=id)
+
+    return render(request, 'author.html', {'author': author})
+
+
+def view_articles(request, id: int):
     article = Article.objects.get(id=id)
+    authors = article.authors.all()
 
-    path = join(data_dir, "django-theta.pkl")
-    df_theta = pd.read_pickle(path)
-    df_theta.reset_index(inplace=True)
-    df_theta["index"] = df_theta["index"].apply(lambda x: int(x.replace("SCOPUS_ID:", "")))
-    df_theta.set_index("index", inplace=True)
-
-    query_x = df_theta.loc[int(id)]
-    dist, ind = tree.query([query_x], k=6)
+    authors = [a.name for a in authors]
 
     similar_articles = []
 
-    for i in df_theta.iloc[ind[0][1:]].index:
-        log.info(f"Found {i}")
-        sim = Article.objects.filter(id=i).get()
-        similar_articles.append(sim)
+    try:
+        df_theta = helper_load_thetas()
+        log.info(df_theta)
+        # df_theta.reset_index(inplace=True)
+        # df_theta["index"] = df_theta["index"].apply(lambda x: int(x.replace("SCOPUS_ID:", "")))
+        # df_theta.set_index("index", inplace=True)
+
+        query_x = df_theta.loc[id]
+        dist, ind = tree.query([query_x], k=6)
+
+        for i in df_theta.iloc[ind[0][1:]].index:
+            log.info(f"Found  Similar Article: {i}")
+            sim = Article.objects.filter(id=i).get()
+            similar_articles.append(sim)
+    except Exception as e:
+        log.exception(e)
 
     return render(
-        request, 'article.html', {'article': article, "similar_articles": similar_articles, "active": "library"})
+        request, 'article.html', {'article': article, "authors": authors, "similar_articles": similar_articles, "active": "library"})
 
 
-def journal_view(request, issn):
+def view_journal(request, issn):
     journal = Journal.objects.get(issn=issn)
     n_articles = Article.objects.filter(journal=journal).count()
 
@@ -87,73 +109,74 @@ def journal_view(request, issn):
 
 
 @login_required
-def fit_recommender_user(request):
+def endpoint_fit_recommender(request):
     """
     Fitting SVM recommender for single user
     """
-    path = join(data_dir, "django-theta.pkl")
-    df_theta = pd.read_pickle(path)
-    X = np.array(df_theta.values)
-
-    df_theta.reset_index(inplace=True)
-    df_theta["index"] = df_theta["index"].apply(lambda x: x.replace("SCOPUS_ID:", ""))
-    df_theta.set_index("index", inplace=True)
-
-    fit_recommender(X, data_dir, df_theta, request.user)
-
-    return redirect(library_view)
+    df_theta = helper_load_thetas()
+    helper_fit_recommender(df_theta, request.user)
+    return redirect(view_library)
 
 
 @login_required
-def fit_recommender_all_users(request):
+def endpoint_fir_all_recommender(request):
     if not request.user.is_superuser:
         log.error(f"Illegal Access")
+        return redirect(view_library)
 
     users = CustomUser.objects.order_by("id")
     log.info(f"Training for {len(users)} users")
 
-    data_dir = join(abspath(join(dirname(__file__), "..")), "data")
-    path = join(data_dir, "django-theta.pkl")
-    df_theta = pd.read_pickle(path)
-    X = np.array(df_theta.values)
-
-    df_theta.reset_index(inplace=True)
-    df_theta["index"] = df_theta["index"].apply(lambda x: x.replace("SCOPUS_ID:", ""))
-    df_theta.set_index("index", inplace=True)
+    df_theta = helper_load_thetas()
 
     for user in users:
-        fit_recommender(X, data_dir, df_theta, user)
+        helper_fit_recommender(df_theta, user)
 
-    return redirect(library_view)
+    return redirect(view_library)
 
 
-def fit_recommender(X, data_dir, df_theta, user):
+def helper_fit_recommender(df_theta, user):
     """
+    Fit SVM for a specific user, pass all articles though it and store the results
+
+    Inspired by
     https://github.com/karpathy/arxiv-sanity-preserver/blob/master/buildsvm.py
     """
     t0 = time.time()
-    ids = [str(article.id) for article in user.articles.order_by("id")]
-    log.info(f"Identifiers: {ids}")
-    log.info(df_theta.index)
+    ids = [article.id for article in user.articles.order_by("id")]
+    log.info(f"Saved Articles for {user}: {ids}")
+    if len(ids) == 0:
+        log.info(f"Can not fit without articles.")
+        return
+
     saved = df_theta.index.isin(ids)
+    log.info(saved.sum())
     y = np.array(saved).astype(np.uint8)
-    log.info(np.unique(y))
+    X = np.array(df_theta.values)
     clf = svm.SVC(class_weight='balanced', verbose=False, max_iter=100000, tol=1e-6, C=0.1)
     clf.fit(X, y)
+
     scores = clf.decision_function(X)
-    path = join(data_dir, "svm", f"{user.id}-scores.pkl")
-    with open(path, "wb") as f:
-        log.info(f"Writing to {path}")
-        pickle.dump(scores, f)
+    helper_dump_recommends(user, scores)
     t1 = time.time()
     log.info(f"Fitting took {t1 - t0} s")
 
 
-def impress_view(request):
+def helper_dump_recommends(user, scores):
+    path = join(data_dir, "svm", f"{user.id}-scores.pkl")
+    with open(path, "wb") as f:
+        log.info(f"Writing recommender scores for {user} to {path}")
+        pickle.dump(scores, f)
+
+
+def view_impress(request):
     return render(request, 'impress.html', {"active": "impress"})
 
 
-def map_view(request):
+def view_map(request):
+    """
+    Create the bokeh map and return required elements
+    """
     log.info(f"Loading data...")
     t1 = time.perf_counter()
 
@@ -196,7 +219,7 @@ def map_view(request):
         title="Publication Date",
         value=(date(1960, 1, 1), date.today()),
         start=date(1960, 1, 1),
-        end=date.today(),
+        end=date(2021, 9, 1),
         step=1)
 
     date_range_slider.js_on_change("value", input_callback)
@@ -283,20 +306,24 @@ def map_view(request):
 
 
 @login_required
-def library_view(request):
+def view_library(request):
     articles = request.user.articles.order_by('id')
 
-    recommended_articles = get_recommended_articles(request.user)
+    recommended_articles = helper_get_recommends(request.user)
 
     template_params = {'articles': articles, "active": "library", "recommended": recommended_articles}
     return render(request, 'library.html', template_params)
 
 
-def get_recommended_articles(user, n=10):
+def helper_get_recommends(user, n=10):
+    """
+    Load article scores from file, select top n results, find their scopus ids and return
+    matching entries from the database
+    """
     data_dir = join(abspath(join(dirname(__file__), "..")), "data")
 
     path = join(data_dir, "svm", f"{user.id}-scores.pkl")
-    # newly registered users will not have a svm
+    # newly registered users will not have recommendations
     if not exists(path):
         return []
 
@@ -304,16 +331,16 @@ def get_recommended_articles(user, n=10):
         log.info(f"Loading scores from {path}")
         scores = pickle.load(f)
 
-    path = join(data_dir, "django-theta.pkl")
-    df_theta = pd.read_pickle(path)
-
     # FIXME: this will lead to too few results in some cases
     top_indexes = np.argsort(scores)[::-1][:100]
-    log.info(top_indexes)
-    log.info(scores[top_indexes])
+    log.info(f"Top indices: {top_indexes}")
+    log.info(f"Top scores: {scores[top_indexes]}")
 
+    # read thetas from disk, get ids of top x articles
+    path = join(data_dir, "django-theta.pkl")
+    df_theta = pd.read_pickle(path)
     df_theta.reset_index(inplace=True)
-
+    # TODO: we should not have to do this each time
     index = df_theta["index"].apply(lambda x: x.replace("SCOPUS_ID:", ""))
     top_ids = index[top_indexes]
 
@@ -333,29 +360,29 @@ def get_recommended_articles(user, n=10):
 
 
 @login_required
-def add_article_to_library(request, id):
+def endpoint_save_article(request, id):
     try:
         art = Article.objects.get(id=id)
         request.user.articles.add(art)
     except Article.DoesNotExist:
         log.error(f"Article with id '{id}' does not exist")
 
-    return redirect(library_view)
+    return redirect(view_library)
 
 
 @login_required
-def remove_article_from_library(request, id):
+def endpoint_unsave_article(request, id):
     try:
         art = Article.objects.get(id=id)
         request.user.articles.remove(art)
     except Article.DoesNotExist:
         log.error(f"Article with id '{id}' does not exist")
 
-    return redirect(library_view)
+    return redirect(view_library)
 
 
 @login_required
-def import_articles(request):
+def endpoint_populate_db(request):
     """
     Populate database with data from Pandas Dataframe
     """
@@ -367,22 +394,55 @@ def import_articles(request):
     path = join(data_dir, "django-data.pkl")
     log.info(f"Loading data from {path}")
     local_df = pd.read_pickle(path)
+    log.info(df.columns)
+
+    # add all authors
+    idx = ~(df["author"].isna() | df["author-id"].isna())
+    author_name_map = {}
+    for _, (author_names, author_ids) in df[idx][["author", "author-id"]].iterrows():
+        # TODO: change export formaty
+        # convert
+        author_names = author_names.split(",")
+        author_names = [name.strip() for name in author_names]
+
+        log.info(author_ids)
+        author_ids = [int(ident) for ident in author_ids]
+
+        for author_name, author_id in zip(author_names, author_ids):
+            if author_id in author_name_map:
+                actual_name = author_name_map[author_id]
+                if actual_name != author_name:
+                    log.warning(f"Wrong author name mapping: {author_id} -> '{author_name}' but is '{actual_name}'")
+            else:
+                author_name_map[author_id] = author_name
+                log.info(f"Author Name {author_id} -> {author_name}")
+                author = Author.objects.create(
+                    id=author_id,
+                    name=author_name
+                )
+                author.save()
 
     # add all journals
     issns = local_df["journal-issn"].unique()
     log.info(f"Found {len(issns)} issns")
     for issn in issns:
-
         if type(issn) is not str:
             log.error(f"Found broken issn {issn}")
-            return redirect(library_view)
+            return redirect(view_library)
 
         names = local_df[local_df["journal-issn"] == issn]["journal"].unique()
-        log.info(f"Name {issn} -> {names}")
+        log.info(f"Journal Name {issn} -> {names}")
         assert len(names == 1)
         Journal.objects.create(
             issn=issn,
             name=names[0]
+        )
+
+    # create countries
+    countries = local_df["country"].unique()
+    for country in countries:
+        Country.objects.create(
+            name=country
         )
 
     # add all articles
@@ -394,25 +454,37 @@ def import_articles(request):
 
         try:
             journal = Journal.objects.get(issn=article["journal-issn"])
+            country = Country.objects.get(name=article["country"])
 
-            Article.objects.create(
+            entry = Article.objects.create(
                 id=ident,
                 title=article["title"],
                 abstract=article["abstract"],
                 publish_on=article["date"],
-                authors=article["author"],
                 lda_topics=article["topics"],
                 journal=journal,
                 citations=article["citations"],
-                country=article["country"],
+                country=country,
                 doi=article["doi"],
                 x1=article["x1"],
                 x2=article["x2"],
             )
+
+            entry.save()
+
+            authors = article["author-id"]
+            if type(authors) is list:
+                authors = [int(ident) for ident in authors]
+                for ident in authors:
+                    author = Author.objects.get(id=ident)
+                    log.info(f"Adding author: {author}")
+                    entry.authors.add(author)
+            entry.save()
+
         except Journal.DoesNotExist:
             log.error(f"Missing Journal with issn: {article['journal-issn']}")
 
     log.warning(f"Import finished.")
-    return redirect(library_view)
+    return redirect(view_library)
 
 

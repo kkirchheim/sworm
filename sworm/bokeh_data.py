@@ -23,3 +23,7 @@ path = join(data_dir, "journal-list.pkl")
 journal_list = list(pd.read_pickle(path)["journal"])
 
 country_list = list(df["country"].unique())
+
+journal_list.sort()
+country_list.sort()
+topic_list.sort()

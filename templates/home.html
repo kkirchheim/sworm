@@ -4,25 +4,123 @@
 
 {% block content %}
 
-    {# <iframe width="50%" height="100%" src="https://www.youtube.com/embed/tgbNymZ7vqY"></iframe> #}
     <div class="container">
-        <h1>Social Work Research Map</h1>
+        <h1 style="text-align: center"><b>S</b>ocial <b>WO</b>rk <b>R</b>esearch <b>M</b>ap</h1>
 
-        Ea vitae ipsum reprehenderit. Nemo recusandae similique qui laboriosam asperiores. Aut ut consequatur sint ullam sit. Voluptatum repellat nisi aperiam labore ut libero qui. Vitae quaerat reprehenderit ea labore.
-        Non magnam doloremque aut soluta. Optio ipsam temporibus iure voluptatem ea earum. Quisquam quo porro veritatis aut aut praesentium aperiam.
-        Laudantium voluptates veritatis modi qui ab temporibus voluptate. Dolores fugit quia ea qui quos facere. Consequatur qui quia ipsa repudiandae corporis voluptatum id laudantium. Sed temporibus laudantium harum enim vero quod. Ut delectus nisi vitae culpa sit.
-        Qui in et ut sint dolor sit. Quam ut alias earum eum provident dicta et voluptatum. Saepe nisi velit hic sunt natus similique exercitationem nam. Quo quae laboriosam dolorum nihil incidunt non qui. Voluptatem recusandae aut omnis consequatur et illo molestiae.
-        Soluta vel est odit nobis harum numquam. Commodi saepe quo molestiae a assumenda omnis aut. Quidem nemo temporibus et aut provident rerum aperiam temporibus.
+        <h2>What is SWORM?</h2>
+        <p>
+            The amount of social work publications has vastly increased within the last 30 years - and it continues to
+            increase (<a href="https://academic.oup.com/bjsw/article-abstract/49/2/428/5042191">Eckl, Ghanem, &
+            Löwenstein, 2019</a>; <a href="https://journals.sagepub.com/doi/10.1177/1049731515624966">Perron et al.,
+            2017</a>). It is nearly impossible for researchers to
+            get a full overview of the literature published for one's own area of interest. The mass of publications but
+            also fragmentation through different databases, publishers and increasingly specialized journals are
+            considerable obstacles to efficient research. If scholars cannot get a full overview of the discourses, how
+            should students or practitioners get one without being familiar with search engines and often complex
+            strategies for how to identify topic-specific publications. The Social Work Research Map (SWORM) aims to
+            solve these problems by mapping publications relevant to social work from the last 60 years and key
+            scientific journals. On one single interactive website, the user is able to identify scholarly literature
+            from across varied disciplines and sources related to one’s own interest. We also hope to contribute to an
+            internationalization of social work science. Since many discourses are characterized by an ‘inward gaze’ and
+            insufficiently acknowledge publications in other countries, SWORM can increase the visibility and
+            accessibility of research from different geographical areas.
 
-        <div class="intro-video">
+        </p>
+
+        <div class="intro-video" style="margin-top: 20px">
             <video width="100%" controls>
                 {% load static %}
-                <source src="{% static 'video/mov_bbb.mp4' %}" type="video/mp4">
-                <source src="{% static 'video/mov_bbb.ogg' %}" type="video/ogg">
+                <source src="{% static 'video/sworm-intro.mp4' %}" type="video/mp4">
+                <source src="{% static 'video/sworm-intro.ogg' %}" type="video/ogg">
                 Your browser does not support the video tag.
             </video>
         </div>
     </div>
 
+    <div class="container" style="margin-top: 20px">
+        <h2>How was SWORM developed?</h2>
+
+        <p>
+            SWORM represents the results of a quantitative text analysis using Latent Dirichlet Allocation (LDA) by
+            Blei, Ng and Jordan (2003). This type of topic modeling is especially suitable for huge data corpora, as
+            researchers using this statistical procedure do not have to subjectively determine or specify topics;
+            rather, the probability of certain topics is determined based on the words that occur together in the
+            documents. LDA is based on a complex statistical model that allows for the investigation of semantic
+            structures in the text. For an introduction in the background and application of LDA in social work see
+            Eckl, Ghanem and Spensberger (2021).
+            The underlying data comprise bibliometric information and abstracts from 23 social work-relevant journals
+            from 1960 to 2020. We used the top twenty journals assessed by Hodge, Yu and Kim (2020). We added three
+            journals that appear within the top ten list based on impact factor scores in the Clarivate Analytics report
+            from 2019 (when you only consider social work journals listed in the Social Work Research Database; Perron
+            et al., 2017). In sum, we used 24,493 publications for the analyses.
+
+            The LDA identified 40 topics in our corpus, which means that, technically, each document is represented by a
+            40-dimensional vector. Each entry in such a vector denotes the probability that the corresponding topic
+            occurs in the document. In order to visualize these 40-dimensional data points on the 2-dimensional plane,
+            we applied a method called “t-distributed stochastic neighbor embedding” (t-SNE), which, loosely speaking,
+            aims to reduce the dimensionality of the data while preserving as much of its structure as possible.
+
+            The recommendation system provided to authenticated users is largely inspired by the “ArXiv Sanity
+            Preserver” developed by Karpathy (2019). Internally, it is based on a machine learning model called support
+            vector machine (SVM). The intuitive idea is that an SVM is trained to discriminate between the documents a
+            particular user has added to their personal library, and those that they have not. Non-added documents for
+            which this decision is most difficult for the SVM are recommended to the user.
+        </p>
+    </div>
+
+    <div class="container" style="margin-top: 20px">
+
+        <h2>Who we are?</h2>
+        <p>
+            We are a research group from three different German universities connected through our interest in the
+            interconnection between social work and computer science. The aim of our collaboration is to contribute to
+            the field of social work by using digital technology for research questions from the discipline.
+        </p>
+
+        <div class="media border p-3" style="margin-top: 10px">
+            <img src="{% static 'img/eckl.jpg' %}" alt="Markus Eckl" class="mr-3 mt-3 rounded-circle"
+                 style="width:120px;">
+            <div class="media-body">
+                <h4><a href="https://www.phil.uni-passau.de/dh/lehrstuhlteam/markus-eckl/">Marcus Eckl</a>
+                    <small><i></i></small></h4>
+                <p>
+                    Social worker (B.A.) and sociologist (B.A., M.A.), is affiliated to the department of Digital
+                    Humanities at the University of Passau. He just submitted his PhD thesis comprising an analysis,
+                    using methods from computer science and social network analysis, of scientific discourses relevant
+                    to social work.
+                </p>
+            </div>
+        </div>
+
+        <div class="media border p-3" style="margin-top: 10px">
+            <img src="{% static 'img/ghanem.jpg' %}" alt="Prof. Christian Ghanem" class="mr-3 mt-3 rounded-circle"
+                 style="width:120px;">
+            <div class="media-body">
+                <h4><a href="https://www.th-nuernberg.de/person/ghanem-christian/">Christian Ghanem</a>
+                    <small><i></i></small></h4>
+                <p>
+                    Social worker (B.A., M.A.) and professor at the Nuremberg Institute of
+                    Technology. His research interests mainly comprise professional judgement, evidence-based practice
+                    and offender
+                    rehabilitation.
+                </p>
+            </div>
+        </div>
+
+        <div class="media border p-3" style="margin-top: 10px; margin-bottom: 10px">
+            <img src="{% static 'img/kirchheim.jpg' %}" alt="Konstantin Kirchheim" class="mr-3 mt-3 rounded-circle"
+                 style="width:120px;">
+            <div class="media-body">
+                <h4><a href="https://cse.cs.ovgu.de/cse/members/konstantin-kirchheim/">Konstantin Kirchheim</a>
+                    <small><i> </i></small></h4>
+                <p>
+                    Computer Scientist (M.Sc.) and currently a PhD candidate at University of Magdeburg. His research
+                    interests include machine learning in general, and its application in anomaly detection in
+                    particular.
+                </p>
+            </div>
+        </div>
+
+    </div>
 
 {% endblock %}

@@ -1,23 +1,24 @@
 from django.urls import path
-from .views import (SignUpView, library_view, import_articles, map_view, add_article_to_library,
-                    remove_article_from_library,
-                    impress_view, articles_view, journal_view, fit_recommender_all_users,
-                    fit_recommender_user)
+from .views import (SignUpView, view_library, endpoint_populate_db, view_map, endpoint_save_article,
+                    endpoint_unsave_article,
+                    view_impress, view_articles, view_journal, endpoint_fir_all_recommender,
+                    endpoint_fit_recommender, view_author)
 
 urlpatterns = [
     path('signup/', SignUpView.as_view(), name='signup'),
-    path('map/', map_view, name="map"),
-    path('article/<int:id>', articles_view, name="article"),
-    path('journal/<str:issn>', journal_view, name="journal"),
-    path('library/', library_view, name="library"),
-    path('impress/', impress_view, name="impress"),
+    path('map/', view_map, name="map"),
+    path('article/<int:id>', view_articles, name="article"),
+    path('author/<int:id>', view_author, name="author"),
+    path('journal/<str:issn>', view_journal, name="journal"),
+    path('library/', view_library, name="library"),
+    path('impress/', view_impress, name="impress"),
 
     # services
-    path('add/<str:id>', add_article_to_library, name="add_to_library"),
-    path('remove/<str:id>', remove_article_from_library, name="remove_from_library"),
+    path('add/<str:id>', endpoint_save_article, name="add_to_library"),
+    path('remove/<str:id>', endpoint_unsave_article, name="remove_from_library"),
 
     # helpers for administration
-    path('import/', import_articles, name="import"),
-    path('refit-all/', fit_recommender_all_users, name="refit_all"),
-    path('refit/', fit_recommender_user, name="refit"),
+    path('import/', endpoint_populate_db, name="import"),
+    path('refit-all/', endpoint_fir_all_recommender, name="refit_all"),
+    path('refit/', endpoint_fit_recommender, name="refit"),
 ]

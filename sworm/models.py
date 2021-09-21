@@ -10,16 +10,32 @@ class Journal(models.Model):
         return self.name
 
 
+class Author(models.Model):
+    id = models.IntegerField(primary_key=True)
+    name = models.CharField(max_length=250)
+
+    def __str__(self):
+        return f"{self.name} ({self.id})"
+
+
+class Country(models.Model):
+    id = models.IntegerField(primary_key=True)
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
 class Article(models.Model):
     id = models.IntegerField(primary_key=True)
     title = models.CharField(max_length=250)
     abstract = models.TextField(max_length=2000)
     publish_on = models.DateField()
-    authors = models.TextField(max_length=1000, null=True)
+    authors = models.ManyToManyField(Author)
     lda_topics = models.TextField(max_length=256, null=True)
     journal = models.ForeignKey(Journal, on_delete=models.CASCADE)
+    country = models.ForeignKey(Country, on_delete=models.CASCADE, null=True)
     citations = models.PositiveSmallIntegerField(null=True)
-    country = models.TextField(max_length=256, null=True)
     doi = models.TextField(max_length=256, null=True)
     x1 = models.FloatField(null=True)
     x2 = models.FloatField(null=True)
