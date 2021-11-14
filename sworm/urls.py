@@ -11,7 +11,7 @@ urlpatterns = [
     path('author/<int:id>', view_author, name="author"),
     path('journal/<str:issn>', view_journal, name="journal"),
     path('library/', view_library, name="library"),
-    path('impress/', view_impress, name="impress"),
+    path('imprint/', view_impress, name="imprint"),
 
     # services
     path('add/<str:id>', endpoint_save_article, name="add_to_library"),

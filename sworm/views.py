@@ -28,8 +28,11 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 data_dir = join(abspath(join(dirname(__file__), "..")), "data")
+django_nn_tfidf_file = join(data_dir, "nn-tfidf.pkl")
 django_theta_file = join(data_dir, "django-theta.pkl")
 django_tfidf_file = join(data_dir, "django-articles-tfidf.pkl")
+
+nearest_neighbors_cache = pickle.load(open(django_nn_tfidf_file, "rb"))
 
 
 class SignUpView(CreateView):
@@ -46,21 +49,8 @@ def helper_load_thetas():
     return df_theta
 
 
-def create_kdtree():
-    # path = join(data_dir, "django-theta.pkl")
-    df_theta = helper_load_thetas()
-    X = np.array(df_theta.values)
-    #
-    # df_theta.reset_index(inplace=True)
-    # df_theta["index"] = df_theta["index"].apply(lambda x: int(x.replace("SCOPUS_ID:", "")))
-    # df_theta.set_index("index", inplace=True)
-
-    log.info(df_theta.index)
-    tree = neighbors.KDTree(X)
-    return tree
-
-
-tree = create_kdtree()
+def helper_load_tfidf():
+    return pickle.load(open(django_tfidf_file, "rb"))
 
 
 def view_author(request, id: int):
@@ -78,18 +68,8 @@ def view_articles(request, id: int):
     similar_articles = []
 
     try:
-        df_theta = helper_load_thetas()
-        log.info(df_theta)
-        # df_theta.reset_index(inplace=True)
-        # df_theta["index"] = df_theta["index"].apply(lambda x: int(x.replace("SCOPUS_ID:", "")))
-        # df_theta.set_index("index", inplace=True)
-
-        query_x = df_theta.loc[id]
-        dist, ind = tree.query([query_x], k=6)
-
-        for i in df_theta.iloc[ind[0][1:]].index:
-            log.info(f"Found  Similar Article: {i}")
-            sim = Article.objects.filter(id=i).get()
+        for i in nearest_neighbors_cache[id][1:]:
+            sim = Article.objects.filter(id=int(i)).get()
             similar_articles.append(sim)
     except Exception as e:
         log.exception(e)
@@ -102,7 +82,7 @@ def view_journal(request, issn):
     journal = Journal.objects.get(issn=issn)
     n_articles = Article.objects.filter(journal=journal).count()
 
-    articles = Article.objects.order_by("id")[:10]
+    articles = Article.objects.order_by("-citations")[:20]
 
     return render(
         request, 'journal.html', {'journal': journal, 'n_articles': n_articles, "articles": articles})
@@ -152,8 +132,10 @@ def helper_fit_recommender(df_theta, user):
     saved = df_theta.index.isin(ids)
     log.info(saved.sum())
     y = np.array(saved).astype(np.uint8)
-    X = np.array(df_theta.values)
-    clf = svm.SVC(class_weight='balanced', verbose=False, max_iter=100000, tol=1e-6, C=0.1)
+    X = helper_load_tfidf()
+    log.info(X.shape)
+    log.info(y.shape)
+    clf = svm.LinearSVC(class_weight='balanced', verbose=False, max_iter=10000, tol=1e-6, C=0.1)
     clf.fit(X, y)
 
     scores = clf.decision_function(X)
@@ -170,7 +152,7 @@ def helper_dump_recommends(user, scores):
 
 
 def view_impress(request):
-    return render(request, 'impress.html', {"active": "impress"})
+    return render(request, 'imprint.html', {"active": "imprint"})
 
 
 def view_map(request):

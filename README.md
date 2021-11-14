@@ -12,12 +12,18 @@ Create a superuser
 python manage.py createsuperuser --username admin --email ""
 ```
 
+## Static files 
+Extract static files for the admin interface
+```
+python manage.py collectstatic --settings=config.settings
+```
+
 Spin up the server 
 ```shell
 python manage.py runserver --insecure
 ```
 
-## Populating database 
+## Populate database 
 To populate the database, login as admin and visit
 ```
 http://localhost:8000/import

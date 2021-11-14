@@ -6,6 +6,10 @@
     <div class="container">
       <h1>{{ author.name }}</h1>
 
+        <p>
+            Articles: {{ author.article_set.count }}
+        </p>
+
          {% for article in author.article_set.all %}
             <div class="article-card card">
                 <div class="card-header">

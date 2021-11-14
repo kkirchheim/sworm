@@ -4,10 +4,12 @@
     <meta charset="utf-8">
     <title>{% block title %}SWORM{% endblock %}</title>
     {% load static %}
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
     <link rel="stylesheet" href="{% static 'css/style.css' %}" type="text/css" />
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     {% block preamble %}{% endblock %}
 </head>
+{#{% load cookiebanner %}#}
+
 <body>
     <header class="header">
       <a href="/" class="logo">SWORM</a>
@@ -21,13 +23,14 @@
         {% else %}
             <a href="{% url 'login' %}">Login</a>
         {% endif %}
-        <a {% if active == "impress" %} class="active" {% endif %} href="{% url 'impress' %}">Impress</a>
+        <a {% if active == "imprint" %} class="active" {% endif %} href="{% url 'imprint' %}">Imprint</a>
       </div>
     </header>
 
     {% block content %}
     {% endblock %}
 
+{#    {% cookiebanner_modal 'vanilla' %}#}
 </body>
 
 </html>
