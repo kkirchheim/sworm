@@ -10,5 +10,4 @@ RUN pip install --user --no-cache-dir -r requirements.txt
 COPY . .
 
 EXPOSE 8000
-CMD gunicorn config.wsgi
-
+CMD python -m gunicorn  -w 4 --bind 0.0.0.0:8000 config.wsgi
