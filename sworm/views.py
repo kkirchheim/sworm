@@ -1,28 +1,37 @@
-from django.shortcuts import render, redirect
-from django.urls import reverse_lazy
-from django.views.generic.edit import CreateView
-from .forms import CustomUserCreationForm
-from .models import Article, Journal, CustomUser, Author, Country
-from django.contrib.auth.decorators import login_required
-from bokeh.plotting import figure
-from datetime import date
-from bokeh.models import ColumnDataSource
-from bokeh.models import TextInput, DateRangeSlider, Div, CustomJS, TapTool, RangeSlider, MultiSelect
-from bokeh.layouts import column, row
-from bokeh.models.widgets import Tabs, Panel
-from bokeh.embed import components
-from .bokeh_helpers import map_create_hover_tool, map_create_color_mapper
-import time
-from sworm.bokeh_data import df, topic_list, journal_list, country_list
-import sworm.bokeh_callbacks as cb
-from sklearn import svm
-from sklearn import neighbors
-from os.path import join, abspath, dirname, exists
+import logging
 import pickle
-import pandas as pd
+import time
+from datetime import date
+from os.path import abspath, dirname, exists, join
 
 import numpy as np
-import logging
+import pandas as pd
+from bokeh.embed import components
+from bokeh.layouts import column, row
+from bokeh.models import (
+    ColumnDataSource,
+    CustomJS,
+    DateRangeSlider,
+    Div,
+    MultiSelect,
+    RangeSlider,
+    TapTool,
+    TextInput,
+)
+from bokeh.models.widgets import Panel, Tabs
+from bokeh.plotting import figure
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
+from django.views.generic.edit import CreateView
+from sklearn import neighbors, svm
+
+import sworm.bokeh_callbacks as cb
+from sworm.bokeh_data import country_list, df, journal_list, topic_list
+
+from .bokeh_helpers import map_create_color_mapper, map_create_hover_tool
+from .forms import CustomUserCreationForm
+from .models import Article, Author, Country, CustomUser, Journal
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -37,8 +46,8 @@ nearest_neighbors_cache = pickle.load(open(django_nn_tfidf_file, "rb"))
 
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
-    success_url = reverse_lazy('login')
-    template_name = 'registration/signup.html'
+    success_url = reverse_lazy("login")
+    template_name = "registration/signup.html"
 
 
 def helper_load_thetas():
@@ -56,7 +65,7 @@ def helper_load_tfidf():
 def view_author(request, id: int):
     author = Author.objects.get(id=id)
 
-    return render(request, 'author.html', {'author': author})
+    return render(request, "author.html", {"author": author})
 
 
 def view_articles(request, id: int):
@@ -75,7 +84,15 @@ def view_articles(request, id: int):
         log.exception(e)
 
     return render(
-        request, 'article.html', {'article': article, "authors": authors, "similar_articles": similar_articles, "active": "library"})
+        request,
+        "article.html",
+        {
+            "article": article,
+            "authors": authors,
+            "similar_articles": similar_articles,
+            "active": "library",
+        },
+    )
 
 
 def view_journal(request, issn):
@@ -85,7 +102,10 @@ def view_journal(request, issn):
     articles = Article.objects.order_by("-citations")[:20]
 
     return render(
-        request, 'journal.html', {'journal': journal, 'n_articles': n_articles, "articles": articles})
+        request,
+        "journal.html",
+        {"journal": journal, "n_articles": n_articles, "articles": articles},
+    )
 
 
 @login_required
@@ -101,7 +121,7 @@ def endpoint_fit_recommender(request):
 @login_required
 def endpoint_fir_all_recommender(request):
     if not request.user.is_superuser:
-        log.error(f"Illegal Access")
+        log.error("Illegal Access")
         return redirect(view_library)
 
     users = CustomUser.objects.order_by("id")
@@ -126,7 +146,7 @@ def helper_fit_recommender(df_theta, user):
     ids = [article.id for article in user.articles.order_by("id")]
     log.info(f"Saved Articles for {user}: {ids}")
     if len(ids) == 0:
-        log.info(f"Can not fit without articles.")
+        log.info("Can not fit without articles.")
         return
 
     saved = df_theta.index.isin(ids)
@@ -135,7 +155,7 @@ def helper_fit_recommender(df_theta, user):
     X = helper_load_tfidf()
     log.info(X.shape)
     log.info(y.shape)
-    clf = svm.LinearSVC(class_weight='balanced', verbose=False, max_iter=10000, tol=1e-6, C=0.1)
+    clf = svm.LinearSVC(class_weight="balanced", verbose=False, max_iter=10000, tol=1e-6, C=0.1)
     clf.fit(X, y)
 
     scores = clf.decision_function(X)
@@ -152,14 +172,14 @@ def helper_dump_recommends(user, scores):
 
 
 def view_impress(request):
-    return render(request, 'imprint.html', {"active": "imprint"})
+    return render(request, "imprint.html", {"active": "imprint"})
 
 
 def view_map(request):
     """
     Create the bokeh map and return required elements
     """
-    log.info(f"Loading data...")
+    log.info("Loading data...")
     t1 = time.perf_counter()
 
     d = df.copy()
@@ -173,17 +193,31 @@ def view_map(request):
     color_mapper = map_create_color_mapper(topic_list)
     hover = map_create_hover_tool()
 
-    plot = figure(plot_width=1800, plot_height=1000,
-                  tools=[hover, 'pan', 'wheel_zoom', 'box_zoom', 'reset', 'save', 'tap'],
-                  title=None, toolbar_location="above")
+    plot = figure(
+        plot_width=1800,
+        plot_height=1000,
+        tools=[hover, "pan", "wheel_zoom", "box_zoom", "reset", "save", "tap"],
+        title=None,
+        toolbar_location="above",
+    )
 
-    renderer = plot.scatter(source=source, x="x1", y="x2", size=5, fill_color=color_mapper, line_alpha=0.3,
-                            line_color="gray", legend_field="cluster")
+    renderer = plot.scatter(
+        source=source,
+        x="x1",
+        y="x2",
+        size=5,
+        fill_color=color_mapper,
+        line_alpha=0.3,
+        line_color="gray",
+        legend_field="cluster",
+    )
 
     log.info(renderer)
 
     div_info = Div(text="Click on an article for details.", height=150)
-    callback_selected = CustomJS(args=dict(source=source, current_selection=div_info), code=cb.selected_code())
+    callback_selected = CustomJS(
+        args=dict(source=source, current_selection=div_info), code=cb.selected_code()
+    )
     taptool = plot.select(type=TapTool)
     taptool.callback = callback_selected
 
@@ -202,7 +236,8 @@ def view_map(request):
         value=(date(1960, 1, 1), date.today()),
         start=date(1960, 1, 1),
         end=date(2021, 9, 1),
-        step=1)
+        step=1,
+    )
 
     date_range_slider.js_on_change("value", input_callback)
 
@@ -211,7 +246,7 @@ def view_map(request):
         value=(0, df["citations"].max()),
         start=0,
         end=df["citations"].max(),
-        step=1
+        step=1,
     )
     citation_count_slider.js_on_change("value", input_callback)
 
@@ -249,28 +284,27 @@ def view_map(request):
 
     plot.toolbar.autohide = True
     # plot.legend.click_policy="hide"
-    plot.add_layout(plot.legend[0], 'right')
+    plot.add_layout(plot.legend[0], "right")
     plot.toolbar.logo = None
 
     # layout
-    info_column = column([
-        selection_title,
-        div_info
-    ])
+    info_column = column([selection_title, div_info])
 
     journal_pane = Panel(child=journal_choice, title="Journals")
     topic_pane = Panel(child=topic_choice, title="Topics")
     country_pane = Panel(child=country_choice, title="Countries")
     tab = Tabs(tabs=[journal_pane, topic_pane, country_pane])
 
-    filter_column = column([
-        filter_title,
-        row([text_cout_label, text_count]),
-        text_search,
-        date_range_slider,
-        citation_count_slider,
-        tab
-    ])
+    filter_column = column(
+        [
+            filter_title,
+            row([text_cout_label, text_count]),
+            text_search,
+            date_range_slider,
+            citation_count_slider,
+            tab,
+        ]
+    )
 
     content = row([filter_column, plot, info_column])
     layout = column([content], name="main")
@@ -283,18 +317,21 @@ def view_map(request):
 
     script, div = components(layout)
 
-    return render(
-        request, 'map.html', {'script': script, 'div': div, "active": "map"})
+    return render(request, "map.html", {"script": script, "div": div, "active": "map"})
 
 
 @login_required
 def view_library(request):
-    articles = request.user.articles.order_by('id')
+    articles = request.user.articles.order_by("id")
 
     recommended_articles = helper_get_recommends(request.user)
 
-    template_params = {'articles': articles, "active": "library", "recommended": recommended_articles}
-    return render(request, 'library.html', template_params)
+    template_params = {
+        "articles": articles,
+        "active": "library",
+        "recommended": recommended_articles,
+    }
+    return render(request, "library.html", template_params)
 
 
 def helper_get_recommends(user, n=10):
@@ -370,8 +407,8 @@ def endpoint_populate_db(request):
     """
 
     if not request.user.is_superuser:
-        log.error(f"import_articles(): Illegal Access")
-        return render(request, 'library.html')
+        log.error("import_articles(): Illegal Access")
+        return render(request, "library.html")
 
     path = join(data_dir, "django-data.pkl")
     log.info(f"Loading data from {path}")
@@ -394,14 +431,13 @@ def endpoint_populate_db(request):
             if author_id in author_name_map:
                 actual_name = author_name_map[author_id]
                 if actual_name != author_name:
-                    log.warning(f"Wrong author name mapping: {author_id} -> '{author_name}' but is '{actual_name}'")
+                    log.warning(
+                        f"Wrong author name mapping: {author_id} -> '{author_name}' but is '{actual_name}'"
+                    )
             else:
                 author_name_map[author_id] = author_name
                 log.info(f"Author Name {author_id} -> {author_name}")
-                author = Author.objects.create(
-                    id=author_id,
-                    name=author_name
-                )
+                author = Author.objects.create(id=author_id, name=author_name)
                 author.save()
 
     # add all journals
@@ -415,17 +451,12 @@ def endpoint_populate_db(request):
         names = local_df[local_df["journal-issn"] == issn]["journal"].unique()
         log.info(f"Journal Name {issn} -> {names}")
         assert len(names == 1)
-        Journal.objects.create(
-            issn=issn,
-            name=names[0]
-        )
+        Journal.objects.create(issn=issn, name=names[0])
 
     # create countries
     countries = local_df["country"].unique()
     for country in countries:
-        Country.objects.create(
-            name=country
-        )
+        Country.objects.create(name=country)
 
     # add all articles
     for n, (index, article) in enumerate(local_df.iterrows()):
@@ -466,7 +497,5 @@ def endpoint_populate_db(request):
         except Journal.DoesNotExist:
             log.error(f"Missing Journal with issn: {article['journal-issn']}")
 
-    log.warning(f"Import finished.")
+    log.warning("Import finished.")
     return redirect(view_library)
-
-
