@@ -1,6 +1,6 @@
-# SWORM Demo Server 
+# SWORM Demo Server
 
-Running on django. 
+Running on Python 3.9 with django.
 
 Create the initial database with
 ```shell
@@ -12,20 +12,20 @@ Create a superuser
 python manage.py createsuperuser --username admin --email ""
 ```
 
-## Static files 
+## Static files
 Extract static files for the admin interface
 ```
 python manage.py collectstatic --settings=config.settings
 ```
 
-Spin up the server 
+Spin up the server
 ```shell
 python manage.py runserver --insecure
 ```
 
-## Populate database 
+## Populate database
 To populate the database, login as admin and visit
 ```
 http://localhost:8000/import
 ```
-This requires 4 files in `data/`. 
+This requires 4 files in `data/`.
