@@ -62,7 +62,6 @@ def input_callback(source):
                 x2[i] = undefined;
             }
         }
-
         text_count.text = String(found);
         source.change.emit();
 

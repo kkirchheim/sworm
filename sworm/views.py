@@ -233,8 +233,8 @@ def view_map(request):
 
     date_range_slider = DateRangeSlider(
         title="Publication Date",
-        value=(date(1960, 1, 1), date(2021, 9, 1)),
-        start=date(1960, 1, 1),
+        value=(date(1959, 1, 1), date(2021, 9, 1)),
+        start=date(1959, 1, 1),
         end=date(2021, 9, 1),
         step=1,
     )

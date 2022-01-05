@@ -2,6 +2,7 @@
 
 Running on Python 3.9 with django.
 
+## Setup
 Create the initial database with
 ```shell
 python manage.py migrate
@@ -12,15 +13,15 @@ Create a superuser
 python manage.py createsuperuser --username admin --email ""
 ```
 
-## Static files
-Extract static files for the admin interface
-```
-python manage.py collectstatic --settings=config.settings
-```
+[comment]: <> (### Static files)
+[comment]: <> (Extract static files for the admin interface)
+[comment]: <> (```)
+[comment]: <> (python manage.py collectstatic --settings=config.settings)
+[comment]: <> (```)
 
-Spin up the server
+Spin up the debug server server
 ```shell
-python manage.py runserver --insecure
+python manage.py runserver --settings config.settings.debug
 ```
 
 ## Populate database
