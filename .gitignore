@@ -4,6 +4,9 @@ __pycache__/
 
 /static/admin/
 
+# do not add env file to git
+.env
+
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm
 # Edit at https://www.toptal.com/developers/gitignore?templates=pycharm
 
