@@ -5,12 +5,14 @@ services:
         image: docker.kondas.de/sworm-django
         container_name: sworm
         build: .
+        restart: always
         volumes:
             - ./data/:/usr/src/app/data/
 
     sworm-proxy:
         image: nginx
         container_name: sworm-proxy
+        restart: always
         ports:
             - "80:80"
             - "443:443"
