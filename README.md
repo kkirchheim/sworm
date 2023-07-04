@@ -19,7 +19,7 @@ python manage.py createsuperuser --username admin --email ""
 [comment]: <> (python manage.py collectstatic --settings=config.settings)
 [comment]: <> (```)
 
-Spin up the debug server server
+Spin up the debug server
 ```shell
 python manage.py runserver --settings config.settings.debug
 ```
